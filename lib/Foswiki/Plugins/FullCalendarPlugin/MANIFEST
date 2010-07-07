@@ -1,0 +1,4 @@
+# Release manifest for FullCalendarPlugin
+data/System/FullCalendarPlugin.txt 0644 Documentation
+lib/Foswiki/Plugins/FullCalendarPlugin.pm 0644 Perl module
+

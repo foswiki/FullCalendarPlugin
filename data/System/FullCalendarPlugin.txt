@@ -1,0 +1,49 @@
+%META:TOPICINFO{author="ProjectContributor" date="1275395213" format="1.1" version="1.1"}%
+%META:TOPICPARENT{name="WebHome"}%
+---+!! Full Calendar Plugin
+<!--
+   * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
+-->
+%SHORTDESCRIPTION%
+
+Adam Shaw has produced a great Web 2.0 Calendar UI, the jQuery !FullCalendar Plugin. This Foswiki plugin provides the backend calendar management code and the js/html interface ontop of the calendar UI for the creation and editing of calendar events.
+
+%TOC%
+
+---++ Features
+As well as one-off events, repeating events can be created - daily, weekly, monthly, yearly, every n, every dow, until end-date or no end-date. And exceptions can be created in repeating events.
+
+---
+---++ The Calendar Event Object
+The event attributes are defined in the EventObject topic. The default definition is in the =%<nop>SYSTEMWEB%=, but can be overridden by a new !EventObject in the =%<nop>USERSWEB%= and finally by one defined in the current web.
+
+---++ Creating and Editing Calendar Events
+Just click on a day in the calendar to create a new event via the input form. Click on an existing event to edit its properties via the input form. If the selected event is part of a repeating sequence, the options are to:
+   * Change this instance only (Create a new event)
+   * Change all instances (Update the original event record)
+   * Change all instances from this point onwards (Create a new event record)
+   
+---++ Customisation
+The EventObject and FullCalendarViewTemplate topics are provided as the default installation. View WebCalendar to see the result. As indicated above, you can create your own EventObject with attributes relevant to your installation and a new view template can be created for the populating of your new event object.
+
+%X% *Note, the default FullCalendarViewTemplate expects the =%USERGROUP%= variable to be set to a Group topic that gets parsed to provide a multi-select list of attendees. You can, off course, change this to be a free text field.*
+
+---++ Future Integration with ActionTrackerPlugin 
+This feature is already coded but currently commented out because it should be configurable via =configure= .
+
+---+ Plugin Installation Instructions
+
+%$INSTALL_INSTRUCTIONS%
+
+---+ Plugin Info
+
+|  Plugin Author: | Foswiki:Main/DavidPatterson |
+|  License: | [[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]] |
+|  Release: | %$RELEASE% |
+|  Version: | %$VERSION% |
+|  Change History: | |
+|  20 Jun 2010 | First release |
+|  15 Apr 2010 | Demo version |
+|  Dependencies: | <table border="1"><tr><th>Name</th><th>Version</th><th>Description</th></tr><tr><td align="left">Date::Calc</td><td align="left">&gt;=6.13</td><td align="left">Required. Available from the CPAN:Date::Calc archive.</td></tr><tr><td align="left">Data::Dumper</td><td align="left">&gt;=</td><td align="left">Available from the CPAN:Data::Dumper archive.</td></tr><tr><td align="left">Foswiki:Extensions/Testing/ObjectPlugin</td><td align="left">&gt;=0</td><td align="left">Required for management of the event objects</td></tr></table> |
+|  Home: | Foswiki:Extensions/%TOPIC% |
+|  Support: | Foswiki:Support/%TOPIC% |
