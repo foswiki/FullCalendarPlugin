@@ -1,257 +1,21 @@
 foswiki.FullCalendar = function($){
-var $form, $allday, $recur, $recursb, $calendar, $change;
+var $form, $allday, $recur, $recursb, $change;
 var oproot;
-var fctopic, fcweb;
-//var $startDate;
-//var $endDate;
-function cancelForm($form) {
-    $form.parent().hide().end().get(0).reset();
-	$form.find('input[id^=fcp_]').val('');
-    $('#recur_data').find('.urlParam').removeClass('urlParam');
-    $('#appt_form_cancel').unbind('click.revert');
-    resetForm();
-}
-function resetForm() {
-    $("#recur_data").find('.appt_recur_form').andSelf().hide();
-    $("#appt_recur").attr("checked",false);
-	
-	$("#appt_users").attr({'multiple':true,'size':5});
-
-    $(".fcp_timeperiod").show();
-    $("#appt_allDay").attr("checked",false);
-
-    $('#appt_form_submit').show();
-    $('#recur_switch').show();
-
-    $('#calEventUpdate').hide();
-    $('#recur_event_change').hide();
-}
-function setAllDay($allday) {
-    $allday.attr('checked',true);
-    $('#newCalEvent .fcp_timeperiod').hide();
-}
-function getEvent(event,func) {
-	var startSecs = Math.floor(event.start.getTime()/1000);
-	var d = new Date();
-	var tzoffset = -d.getTimezoneOffset() * 60;  // messy handling of local tz, must do better
-	startSecs += tzoffset; // messy handling of local tz, must do better
-	var endSecs = startSecs + (60*60*24) + 1; // + 1 day & 1 sec
+function getForm() {
 	foswiki.HijaxPlugin.serverAction({
 		type: "GET",
+		dataType: 'html',
 		async: false,
-		url: foswiki.scriptUrl+'/rest/FullCalendarPlugin/edit',
-		data: {
-			topic: fcweb+'.'+fctopic,
-            uid: event.id,
-            start: startSecs,
-            end: endSecs,
-            cover: 'ajax',
-            asobject: 1
-        },
-		success: function(gotEvent) {
-			gotEvent.start = $.fullCalendar.parseISO8601(gotEvent.start,1); // TODO: ignoring Timezone for now
-			gotEvent.end = $.fullCalendar.parseISO8601(gotEvent.end,1);
-			func(gotEvent);
+		loading: false,
+		nooverlay: true,
+		url: foswiki.scriptUrl+'/rest/FullCalendarPlugin/form',
+		success: function(html){
+			initForm(html);
 		}
 	});
 }
-function updateEvent(action) {
-	var upData = {
-					topic: fcweb+'.'+fctopic,
-					cover: 'ajax',
-					asobject: 1,
-					uid: $('#fcp_uid').val()
-				};
-	var rchange = $change.is(':visible') ? $change.find('input[name="recur_change"]:checked').val() : '';
-	switch (rchange) {
-		case "only":
-			var event;
-			var exception = $('#fcp_exceptions').val();
-			if (action == 'save') {
-				// create new event...
-				foswiki.HijaxPlugin.serverAction({
-					url: oproot+'new',
-					exception: exception,
-					upData: upData,
-					data: foswiki.FullCalendar.serializeEvent(),
-					success: function(event){
-						// ...and...
-						foswiki.FullCalendar.addEventException(this.upData, this.exception+':'+event.uid);
-					}
-				});
-			} else {
-				foswiki.FullCalendar.addEventException(upData, exception+':deleted');
-			}
-			break;
-		case "fromhere":
-			// update rangeEnd
-			var actionData = $.extend({},upData,{
-				rangeEnd: $.fullCalendar.formatDate($.datepicker.parseDate('d M yy',$('#appt_startDate').val()), 'yyyy-MM-dd')
-			});
-			foswiki.HijaxPlugin.serverAction({
-				url: oproot+'save',
-				root: oproot,
-				action: action,
-				data: actionData,
-				success: function(){
-					if (this.action != 'delete') {
-						// create new event
-						foswiki.HijaxPlugin.serverAction({
-							url: this.root+'new',
-							data: foswiki.FullCalendar.serializeEvent(),
-							success: function(){
-								// ...and...
-								foswiki.FullCalendar.refetchEvents();
-							}
-						});
-					}
-				}
-			});
-			break;
-		default: // all or ''
-			// update original event record
-			var actionData;
-			if (action == 'save') {
-				actionData = foswiki.FullCalendar.serializeEvent() + '&uid=' + $('#fcp_uid').val();
-			} else {
-				actionData = upData;
-			}
-			foswiki.HijaxPlugin.serverAction({
-				url: oproot+action,
-				data: actionData,
-				success: function(){
-					foswiki.FullCalendar.refetchEvents();
-				}
-			});
-			break;
-	}
-	return false;
-}
-return {
-setWebTopic : function(w,t) {
-	if (w) fcweb = w;
-	if (t) fctopic = t;
-},
-serializeEvent : function() {
-	$('#recur_data').find('.urlParam').removeClass('urlParam');
-	if ($('#appt_recur').is(':checked')) {
-		$('#appt_every').addClass('urlParam');
-			var repeater = $recursb.find('input[name="appt_recur_type"]:checked').val();
-		switch (repeater) {
-			case "D":
-				break;
-			case "Wdow":
-				$('#appt_form_day input').addClass('urlParam');
-				break;
-			default:
-				var daydate = $('#appt_form_date input[name="appt_daydate"]:checked').val();
-				repeater = repeater + daydate;
-				if (daydate == 'ndow') $('#ndow .ndow').addClass('urlParam');
-				break;
-		}
-		$('#fcp_repeater').val(repeater);
-		if ($('#appt_recur_range_fieldset input[name="appt_range"]:checked').val() == 'by') {
-            var range = $.datepicker.parseDate('d M yy',$('#appt_range_date').val());
-            $('#fcp_rangeEnd').val($.fullCalendar.formatDate(range, 'yyyy-MM-dd'));
-		}
-	}
-	var start = $.datepicker.parseDate('d M yy',$('#appt_startDate').val());
-	$('#fcp_startDate').val($.fullCalendar.formatDate(start, 'yyyy-MM-dd'));
-	var end = $.datepicker.parseDate('d M yy',$('#appt_endDate').val());
-	var diff = end.getTime() - start.getTime();
-	$('#fcp_durationDays').val(diff/86400000);
-    var stime, etime;
-    if (!$allday.is(':checked')) {
-        stime = $('#appt_startTime').val();
-        etime = $('#appt_endTime').val();
-        $('#fcp_allDay').val("0");
-	} else {
-		stime = etime = '00:00:00';
-		$('#fcp_allDay').val("1");
-	}
-	$('#fcp_startTime').val(stime);
-	$('#fcp_endTime').val(etime);
-	if ($form.find("input[name='category']:checked").val() == "leave") {
-		$('#appt_title').val($('#appt_users').val());
-	}
-	return $form.find('.urlParam').serialize();
-},
-loadForm : function(event) {
-	$('#eventCat input:radio.' + event.category).trigger('click');  // been trying to get ie6 working but no go
-//	$form.data({start:$.fullCalendar.parseISO8601(event.startDate,1),duration:event.durationDays});
-	$('#appt_title').val(event.title);
-	$('#appt_location').val(event.location);
-	$('#appt_desc').val(event.text);
-	$('#appt_users').val(event.users);
-	var dateformat = 'd MMM yyyy-HH:mm:ss';
-	var dateStr = $.fullCalendar.formatDate(event.start, dateformat)
-	var dateArray = dateStr.split('-');
-	$startDate = $('#appt_startDate').val(dateArray[0]);
-	$('#appt_startTime').val(dateArray[1]);
-	dateStr = $.fullCalendar.formatDate(event.end, dateformat)
-	dateArray = dateStr.split('-');
-	$endDate = $('#appt_endDate').val(dateArray[0]);
-	$('#appt_endTime').val(dateArray[1]);
-	if (event.allDay) {
-		$allday.attr('checked',true);
-		$form.find('select.fcp_timeperiod').hide();
-	}
-	$('#fcp_uid').val(event.uid);
-	$('#appt_form_submit').hide();
-	$('#calEventUpdate').show();
-	if (event.repeater) {
-		$('#recur_event_change').show();
-		$('#recur_data').find('.urlParam').removeClass('urlParam');
-		$('#appt_every').val(event.every);
-		var repeater = event.repeater;
-		switch (repeater) {
-			case "D":
-				break;
-			case "Wdow":
-				$('#appt_recur_weekly').trigger('click');
-				$('#appt_form_day input.wdow').val(event.dow);
-				//alert(event.dow);
-				break;
-			default:
-				var yearmonth = repeater.split('M'); //
-				if (yearmonth[0] == 'Y') {
-					$('#appt_recur_yearly').trigger('click');
-				} else {
-					$('#appt_recur_monthly').trigger('click');
-				}
-				if (yearmonth[1] == 'dd') {
-					$('#appt_on_date').trigger('click');
-				} else {
-					$('#appt_monthly_day').trigger('click');
-				}
-				break;
-		}
-		if (event.rangeEnd) {
-			$('#appt_range_by').attr('checked',true);
-			var range = $.fullCalendar.parseISO8601(event.rangeEnd);
-			$('#appt_range_date').val($.fullCalendar.formatDate(range, 'd MMM yyyy'));
-		}
-		if (event.exceptions) event.exceptions += ',';
-		else event.exceptions = '';
-		$('#fcp_exceptions').val(event.exceptions + $.fullCalendar.formatDate(event.start, 'yyyy-MM-dd'));
-	}
-	$form.parent().centerInClient({forceAbsolute:true}).fadeIn();
-},
-refetchEvents : function() {
-	cancelForm($form);
-	$calendar.fullCalendar('refetchEvents');
-},
-addEventException : function(upData, exception) {
-	$.extend(upData,{exceptions: exception});
-	foswiki.HijaxPlugin.serverAction({
-		url: oproot+'save',
-		data: upData,
-		success: function(){
-			foswiki.FullCalendar.refetchEvents();
-		}
-	});
-},
-init : function() {
+function initForm(html) {
+	$('<div>'+html+'</div>').find('#calEventDiv').appendTo('body');
 	oproot = foswiki.scriptUrl+'/rest/ObjectPlugin/';
 	var $apptDateClass = $(".appt_date").attr("disabled","disabled");
 	$('#calEventDiv').draggable();
@@ -392,11 +156,267 @@ init : function() {
 	$('#appt_form_delete').click(function(){
 		return updateEvent('delete');
 	});
+}
+function cancelForm($form) {
+    $form.parent().hide().end().get(0).reset();
+	$form.find('input[id^=fcp_]').val('');
+    $('#recur_data').find('.urlParam').removeClass('urlParam');
+    $('#appt_form_cancel').unbind('click.revert');
+	$form.removeData('reltopic');
+    resetForm();
+}
+function resetForm() {
+    $("#recur_data").find('.appt_recur_form').andSelf().hide();
+    $("#appt_recur").attr("checked",false);
+	
+	$("#appt_users").attr({'multiple':true,'size':5});
 
-    $calendar = $('#calendar');
-	$calendar.fullCalendar({
-         theme: true,
-         header: {
+    $(".fcp_timeperiod").show();
+    $("#appt_allDay").attr("checked",false);
+
+    $('#appt_form_submit').show();
+    $('#recur_switch').show();
+
+    $('#calEventUpdate').hide();
+    $('#recur_event_change').hide();
+}
+function setAllDay($allday) {
+    $allday.attr('checked',true);
+    $('#newCalEvent .fcp_timeperiod').hide();
+}
+function getEvent(event,func) {
+	var startSecs = Math.floor(event.start.getTime()/1000);
+	var d = new Date();
+	var tzoffset = -d.getTimezoneOffset() * 60;  // messy handling of local tz, is there better?
+	startSecs += tzoffset; 
+	var endSecs = startSecs + (60*60*24) + 1; // + 1 day & 1 sec
+	foswiki.HijaxPlugin.serverAction({
+		type: "GET",
+		async: false,
+		url: foswiki.scriptUrl+'/rest/FullCalendarPlugin/edit',
+		data: {
+			topic: event.web+'.'+event.topic,
+            uid: event.id,
+            start: startSecs,
+            end: endSecs,
+            asobject: 1
+        },
+		success: function(gotEvent) {
+			gotEvent.start = $.fullCalendar.parseISO8601(gotEvent.start,1); // ignoring Timezone
+			gotEvent.end = $.fullCalendar.parseISO8601(gotEvent.end,1);
+			func(gotEvent);
+		}
+	});
+}
+function updateEvent(action) {
+	var upData = {
+					topic: $('#fcp_topic').val(),
+					asobject: 1,
+					uid: $('#fcp_uid').val()
+				};
+	var rchange = $change.is(':visible') ? $change.find('input[name="recur_change"]:checked').val() : '';
+	switch (rchange) {
+		case "only":
+			var event;
+			var exception = $('#fcp_exceptions').val();
+			if (action == 'save') {
+				// create new event...
+				foswiki.HijaxPlugin.serverAction({
+					url: oproot+'new',
+					exception: exception,
+					upData: upData,
+					data: foswiki.FullCalendar.serializeEvent(),
+					success: function(event){
+						// ...and...
+						foswiki.FullCalendar.addEventException(this.upData, this.exception+':'+event.uid);
+					}
+				});
+			} else {
+				foswiki.FullCalendar.addEventException(upData, exception+':deleted');
+			}
+			break;
+		case "fromhere":
+			// update rangeEnd
+			var actionData = $.extend({},upData,{
+				rangeEnd: $.fullCalendar.formatDate($.datepicker.parseDate('d M yy',$('#appt_startDate').val()), 'yyyy-MM-dd')
+			});
+			foswiki.HijaxPlugin.serverAction({
+				url: oproot+'save',
+				root: oproot,
+				action: action,
+				data: actionData,
+				success: function(){
+					if (this.action != 'delete') {
+						// create new event
+						foswiki.HijaxPlugin.serverAction({
+							url: this.root+'new',
+							data: foswiki.FullCalendar.serializeEvent(),
+							success: function(){
+								// ...and...
+								foswiki.FullCalendar.refetchEvents();
+							}
+						});
+					}
+				}
+			});
+			break;
+		default: // all or ''
+			// update original event record
+			var actionData;
+			if (action == 'save') {
+				actionData = foswiki.FullCalendar.serializeEvent();
+				actionData.uid = upData.uid;
+			} else { // delete
+				actionData = upData;
+			}
+			foswiki.HijaxPlugin.serverAction({
+				url: oproot+action,
+				data: actionData,
+				success: function(){
+					foswiki.FullCalendar.refetchEvents();
+				}
+			});
+			break;
+	}
+	return false;
+}
+return {
+serializeEvent : function() {
+	$('#recur_data').find('.urlParam').removeClass('urlParam');
+	if ($('#appt_recur').is(':checked')) {
+		$('#appt_every').addClass('urlParam');
+			var repeater = $recursb.find('input[name="appt_recur_type"]:checked').val();
+		switch (repeater) {
+			case "D":
+				break;
+			case "Wdow":
+				$('#appt_form_day input').addClass('urlParam');
+				break;
+			default:
+				var daydate = $('#appt_form_date input[name="appt_daydate"]:checked').val();
+				repeater = repeater + daydate;
+				if (daydate == 'ndow') $('#ndow .ndow').addClass('urlParam');
+				break;
+		}
+		$('#fcp_repeater').val(repeater);
+		if ($('#appt_recur_range_fieldset input[name="appt_range"]:checked').val() == 'by') {
+            var range = $.datepicker.parseDate('d M yy',$('#appt_range_date').val());
+            $('#fcp_rangeEnd').val($.fullCalendar.formatDate(range, 'yyyy-MM-dd'));
+		}
+	}
+	var start = $.datepicker.parseDate('d M yy',$('#appt_startDate').val());
+	$('#fcp_startDate').val($.fullCalendar.formatDate(start, 'yyyy-MM-dd'));
+	var end = $.datepicker.parseDate('d M yy',$('#appt_endDate').val());
+	var diff = end.getTime() - start.getTime();
+	$('#fcp_durationDays').val(diff/86400000);
+    var stime, etime;
+    if (!$allday.is(':checked')) {
+        stime = $('#appt_startTime').val();
+        etime = $('#appt_endTime').val();
+        $('#fcp_allDay').val("0");
+	} else {
+		stime = etime = '00:00:00';
+		$('#fcp_allDay').val("1");
+	}
+	$('#fcp_startTime').val(stime);
+	$('#fcp_endTime').val(etime);
+	if ($form.find("input[name='category']:checked").val() == "leave") {
+		$('#appt_title').val($('#appt_users').val());
+	}
+	return foswiki.HijaxPlugin.asObject($form.find('.urlParam')
+		.not('input[name="type"]')  // just incase
+		.add('<input name="type" value="event">')
+		.add('<input name="asobject" value="1">'));
+		// .serialize(); // now using asObject
+},
+loadForm : function(event) {
+	$('#eventCat input:radio.' + event.category).trigger('click');  // been trying to get ie6 working but no go
+//	$form.data({start:$.fullCalendar.parseISO8601(event.startDate,1),duration:event.durationDays});
+	$('#appt_title').val(event.title);
+	$('#appt_location').val(event.location);
+	$('#appt_desc').val(event.text);
+	$('#appt_users').val(event.users);
+	var dateformat = 'd MMM yyyy-HH:mm:ss';
+	var dateStr = $.fullCalendar.formatDate(event.start, dateformat)
+	var dateArray = dateStr.split('-');
+	$startDate = $('#appt_startDate').val(dateArray[0]);
+	$('#appt_startTime').val(dateArray[1]);
+	dateStr = $.fullCalendar.formatDate(event.end, dateformat)
+	dateArray = dateStr.split('-');
+	$endDate = $('#appt_endDate').val(dateArray[0]);
+	$('#appt_endTime').val(dateArray[1]);
+	if (event.allDay) {
+		$allday.attr('checked',true);
+		$form.find('select.fcp_timeperiod').hide();
+	}
+	$('#fcp_uid').val(event.uid);
+	var topic = event.web+'.'+event.topic;
+	$('#fcp_topic').val(topic);
+	$('#fcp_reltopic').val($form.data('reltopic'));
+	$('#appt_form_submit').hide();
+	$('#calEventUpdate').show();
+	if (event.repeater) {
+		$('#recur_event_change').show();
+		$('#recur_data').find('.urlParam').removeClass('urlParam');
+		$('#appt_every').val(event.every);
+		var repeater = event.repeater;
+		switch (repeater) {
+			case "D":
+				break;
+			case "Wdow":
+				$('#appt_recur_weekly').trigger('click');
+				$('#appt_form_day input.wdow').val(event.dow);
+				//alert(event.dow);
+				break;
+			default:
+				var yearmonth = repeater.split('M'); //
+				if (yearmonth[0] == 'Y') {
+					$('#appt_recur_yearly').trigger('click');
+				} else {
+					$('#appt_recur_monthly').trigger('click');
+				}
+				if (yearmonth[1] == 'dd') {
+					$('#appt_on_date').trigger('click');
+				} else {
+					$('#appt_monthly_day').trigger('click');
+				}
+				break;
+		}
+		if (event.rangeEnd) {
+			$('#appt_range_by').attr('checked',true);
+			var range = $.fullCalendar.parseISO8601(event.rangeEnd);
+			$('#appt_range_date').val($.fullCalendar.formatDate(range, 'd MMM yyyy'));
+		}
+		if (event.exceptions) event.exceptions += ',';
+		else event.exceptions = '';
+		$('#fcp_exceptions').val(event.exceptions + $.fullCalendar.formatDate(event.start, 'yyyy-MM-dd'));
+	}
+	$form.parent().centerInClient({forceAbsolute:true}).fadeIn();
+},
+refetchEvents : function() {
+	cancelForm($form);
+	var calendar = $form.data('calendar');
+	$form.removeData('calendar');
+	$(calendar).fullCalendar('refetchEvents');
+},
+addEventException : function(upData, exception) {
+	$.extend(upData,{exceptions: exception});
+	foswiki.HijaxPlugin.serverAction({
+		url: oproot+'save',
+		data: upData,
+		success: function(){
+			foswiki.FullCalendar.refetchEvents();
+		}
+	});
+},
+init : function(cal,calendartopic,reltopic,viewall) {
+	if (calendartopic.search(/\./) == -1) calendartopic = foswiki.web+'.'+calendartopic; // SMELL: a bit simple
+    $(cal).mouseup(function(){
+		$form.data('calendar',this);
+		$form.data('reltopic',reltopic);
+	}).fullCalendar({
+        theme: true,
+        header: {
             left: 'prev,next today',
             center: 'title',
             right: 'month,agendaWeek,agendaDay'
@@ -407,26 +427,27 @@ init : function() {
 			day: 'dddd d/M'
 		},
         timeFormat: 'HH:mm',    // uppercase H for 24-hour clock - alt: h(:mm)t
-		events: foswiki.scriptUrl+'/rest/FullCalendarPlugin/events?topic='+fcweb+'.'+fctopic+'&asobject=1&cover=ajax',
-        // events: function(start, end, callback) {  // doing the event rendering this way takes soooooo long but it's currently the only way to hook into any oops content when requesting events
-			// $.ajax({
-				// url: foswiki.scriptUrl+'/rest/FullCalendarPlugin/events?topic='+fcweb+'.'+fctopic+'&asobject=1&cover=ajax',
-				// dataType: 'json',
-				// data: {  // our feed expects UNIX timestamps
-					// start: Math.round(start.getTime() / 1000),
-					// end: Math.round(end.getTime() / 1000)
-				// },
-				// success: function(json) {
-					// if (json.context == 'oops'){
-						// foswiki.HijaxPlugin.showOops(json.content);
-					// } else {
-						// $.each(json,function(i,event){
-							// $calendar.fullCalendar('renderEvent',event);
-						// });
-					// }
-				// }
-			// });
-		// },
+        events: function(start, end, reportEventsAndPop) {
+			foswiki.HijaxPlugin.serverAction({
+				url: foswiki.scriptUrl+'/rest/FullCalendarPlugin/events',
+				type: 'GET',
+				async: true,
+				data: {  // our feed expects UNIX timestamps in seconds
+					start: Math.round(start.getTime() / 1000),
+					end: Math.round(end.getTime() / 1000),
+					topic: foswiki.web+'.'+foswiki.topic,
+					calendartopic: calendartopic,
+					reltopic: viewall ? '' : reltopic,
+					asobject: 1
+				},
+				success: function(json) {
+					reportEventsAndPop(json); // function provided by $.fullcalendar to display the events
+					// $.each(json,function(i,event){
+						// TODO: populate an agenda list with the events
+					// });
+				}
+			});
+		},
         eventDrop: function(event,dayDelta,minuteDelta,allDay,revertFunc,jsEvent,ui,view) {
             if (dayDelta || minuteDelta || (allDay && view.name != 'month')) {
 				// because FullCalendar adds the deltas after a drop and we want the original startdate
@@ -437,6 +458,8 @@ init : function() {
 				myEvent.start.setTime(event.start.getTime() - dayDelta);
 				myEvent.start.setTime(myEvent.start.getTime() - minuteDelta);
 				myEvent.id = event.id;
+				myEvent.web = event.web;
+				myEvent.topic = event.topic;
                 getEvent(myEvent, function(gotEvent){ 
 					if (allDay && view.name != 'month') {
 						gotEvent.allDay = 1;
@@ -467,7 +490,7 @@ init : function() {
         },
         dayClick: function(date, allDay, jsEvent, view) {
             var dateformat = 'd MMM yyyy-HH:mm:ss';
-            var dateStr = $.fullCalendar.formatDate(date, dateformat)
+            var dateStr = $.fullCalendar.formatDate(date, dateformat);
             var dateArray = dateStr.split('-');
             $('#appt_startDate').val(dateArray[0]);
             var end = new Date(date);
@@ -486,6 +509,7 @@ init : function() {
             } else {
 				$('#appt_endDate').val(dateArray[0]);
             }
+			$('#fcp_topic').val(calendartopic);
             $form.parent().centerInClient({forceAbsolute:true}).fadeIn();
         },
         eventClick: function(calEvent, jsEvent, view) {
@@ -498,6 +522,7 @@ init : function() {
             }
         }
     });
+	if (!$form) getForm();
 }
 };
 }(jQuery);

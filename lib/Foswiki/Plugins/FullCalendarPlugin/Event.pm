@@ -20,7 +20,7 @@ require Time::ParseDate;
 require Foswiki::Func;
 
 use Date::Calc qw(:all);
-use Data::Dumper;
+# use Data::Dumper;
 
 # sub new {
 	# my $class = shift;

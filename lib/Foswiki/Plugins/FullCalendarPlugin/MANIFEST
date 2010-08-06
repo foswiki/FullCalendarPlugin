@@ -1,4 +1,16 @@
 # Release manifest for FullCalendarPlugin
 data/System/FullCalendarPlugin.txt 0644 Documentation
-lib/Foswiki/Plugins/FullCalendarPlugin.pm 0644 Perl module
-
+data/System/EventObject.txt 0644
+data/System/FullCalendarEventTemplate.txt 0644
+data/System/FullCalendarViewTemplate.txt 0644
+data/System/WebCalendar.txt 0644
+lib/Foswiki/Plugins/FullCalendarPlugin.pm 0644
+lib/Foswiki/Plugins/FullCalendarPlugin/Event.pm 0644
+lib/Foswiki/Plugins/FullCalendarPlugin/EventSet.pm 0644
+pub/System/FullCalendarPlugin/fcp.css 0644
+pub/System/FullCalendarPlugin/fcp.js 0644
+pub/System/FullCalendarPlugin/fullcalendar-1.4.4/fullcalendar.css 0644
+pub/System/FullCalendarPlugin/fullcalendar-1.4.4/fullcalendar.js 0644
+pub/System/FullCalendarPlugin/fullcalendar-1.4.4/fullcalendar.min.js 0644
+pub/System/FullCalendarPlugin/fullcalendar-1.4.4/gcal.js 0644
+templates/oopsfullcalendar.tmpl 0644

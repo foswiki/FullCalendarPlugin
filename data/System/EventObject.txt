@@ -3,7 +3,6 @@
 ---+ %SPACEOUT{%TOPIC%}%
 
 | *Name:* | *Type:* | *Size:* | *Value:*  | *Tooltip message:* | *Attributes:* |
-| reltopic | text | 20 |  |  |  |
 | startDate | text | 10 |  |  |  |
 | durationDays | text | 10 |  |  |  |
 | startTime | text | 15 |  |  |  |

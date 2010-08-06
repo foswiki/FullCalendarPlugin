@@ -17,7 +17,7 @@ package Foswiki::Plugins::FullCalendarPlugin;
 use strict;
 use Assert;
 use Error qw( :try );
-use Data::Dumper;
+# use Data::Dumper;
 use Date::Calc qw( Date_to_Days Add_Delta_Days );
 
 require Foswiki::Func;
@@ -50,9 +50,39 @@ sub initPlugin {
 
 	Foswiki::Func::registerRESTHandler( 'edit', \&_editEventRESTHandler );
 	Foswiki::Func::registerRESTHandler( 'events', \&_eventsRESTHandler );
+	Foswiki::Func::registerRESTHandler( 'form', \&_eventFormRESTHandler );
+	Foswiki::Func::registerTagHandler( 'FULLCALENDAR', \&_handleFullCalendar, 'context-free');
     # $debug = $Foswiki::cfg{Plugins}{ObjectPlugin}{Debug} || 1;
     return 1;
 };
+
+sub _handleFullCalendar {
+    my( $session, $attrs, $topic, $web ) = @_;
+
+	my $calendartopic = $attrs->{_DEFAULT} || $attrs->{calendartopic} || 'WebCalendar';
+	$calendartopic =~ s/\s*//;
+	my $reltopic = $attrs->{reltopic} || $topic eq $calendartopic ? '' : $topic;
+	my $viewall = $attrs->{viewall} || '';
+	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
+	my $fcpCSS = Foswiki::Func::expandTemplate( 'fcpCSS' );
+	my $fcpJS = Foswiki::Func::expandTemplate( 'fcpJS' );
+	my $rand = int rand(999999);
+	my $calendar = <<"HERE";
+<noautolink>
+%ADDTOZONE{"head" requires="JQUERYPLUGIN::THEME" text="$fcpCSS"}%
+<div id="calendar$rand"></div>
+%ADDTOZONE{"body" requires="HIJAXPLUGIN_JS" text="
+$fcpJS
+<script type='text/javascript'>
+jQuery(function(){
+	foswiki.FullCalendar.init('#calendar$rand','$calendartopic','$reltopic','$viewall');
+});
+</script>
+"}%
+</noautolink>
+HERE
+	return $calendar;
+}
 
 sub parseISOdate {
 	my $date = shift;
@@ -117,6 +147,13 @@ sub _editEventRESTHandler {
 	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_eventEdit);
 }
 
+sub _eventFormRESTHandler {
+    my $session = shift;
+	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
+	my $form = Foswiki::Func::expandTemplate( 'eventForm' );
+    return Foswiki::Func::renderText(Foswiki::Func::expandCommonVariables($form));
+}
+
 sub _findSingleEvent {
     my ( $web, $topic, $uid ) = @_;
 
@@ -137,11 +174,14 @@ sub _dateRangeSearch {
 
 	my $start = $query->param('start');
 	my $end = $query->param('end');
+	my $reltopic = $query->param('reltopic') || '';
+	my $calendartopic = $query->param('calendartopic');
+	($web, $topic) = Foswiki::Func::normalizeWebTopicName('', $calendartopic);
 	# writeDebug("$start $end");
 	$start = Foswiki::Time::formatTime($start, 'iso');
 	$end = Foswiki::Time::formatTime($end, 'iso');
 	writeDebug("$start $end $topic");
-	my $es = Foswiki::Plugins::FullCalendarPlugin::EventSet::dateRangeSearch( $web, $topic, $start, $end );
+	my $es = Foswiki::Plugins::FullCalendarPlugin::EventSet::dateRangeSearch( $web, $topic, $start, $end, $reltopic );
 	# writeDebug(Dumper(@{$es->{OBJECTS}}));
 	my $startObj = parseISOdate($start);
 	my $endObj = parseISOdate($end);

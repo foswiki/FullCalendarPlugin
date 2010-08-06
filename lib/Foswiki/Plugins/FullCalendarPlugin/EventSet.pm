@@ -21,7 +21,7 @@ use Foswiki::Plugins::ObjectPlugin::ObjectSet;
 
 use strict;
 use integer;
-use Data::Dumper;
+# use Data::Dumper;
 use Foswiki::Func;
 require Foswiki::Plugins::ObjectPlugin;
 
@@ -41,7 +41,7 @@ sub load {
 }
 		
 sub dateRangeSearch {
-    my ( $web, $topic, $start, $end ) = @_;
+    my ( $web, $topic, $start, $end, $reltopic ) = @_;
 
     my $chosen = new Foswiki::Plugins::FullCalendarPlugin::EventSet();
 	
@@ -50,7 +50,11 @@ sub dateRangeSearch {
     foreach my $event ( @{$es->{OBJECTS}} ) {
 	# Foswiki::Func::writeDebug(ref($event));
         if ( ref($event) && $event->withinRange( $start, $end ) ) {
-            $chosen->add( $event );
+			if ($reltopic) {
+				$chosen->add( $event ) if ($event->{reltopic} && $event->{reltopic} eq $reltopic);
+			} else {
+				$chosen->add( $event );
+			}
         }
     }
 
