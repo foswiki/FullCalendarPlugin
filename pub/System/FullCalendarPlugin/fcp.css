@@ -3,22 +3,22 @@
 	width:5em;
 	text-align:right;
 }
-#calendar .action a {
+.fcp_calendar .action a {
     background-color:red;
 }
-#calendar .meeting a, #eventCat .meeting {
+.fcp_calendar .meeting a, #eventCat .meeting {
     background-color:blue;
     color:#fff;
 }
-#calendar .mission a, #eventCat .mission {
+.fcp_calendar .mission a, #eventCat .mission {
     background-color:green;
     color:#fff;
 }
-#calendar .leave a, #eventCat .leave {
+.fcp_calendar .leave a, #eventCat .leave {
     background-color:yellow;
     color:#000;
 }
-#calendar .milestone a, #eventCat .milestone {
+.fcp_calendar .milestone a, #eventCat .milestone {
     background-color:#000;
     color:#fff;
 }

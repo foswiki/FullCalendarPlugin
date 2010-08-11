@@ -40,7 +40,9 @@ sub withinRange {
 sub setFullCalendarAttrs {
 	my $this = shift;
 	$this->{id} = $this->{uid};
+	$this->{category} ||= 'external';
 	$this->{className} = $this->{category};
+	$this->{editable} = 0 if $this->{category} eq 'external';
 	$this->{allDay} += 0;
 	$this->{title} ||= 'no title'; # one of the required fields in an FC Event Object
 }

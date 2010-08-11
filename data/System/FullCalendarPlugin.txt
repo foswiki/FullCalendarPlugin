@@ -17,10 +17,9 @@ As well as one-off events, repeating events can be created - daily, weekly, mont
 ---++ The FULLCALENDAR macro
 You can have multiple calendars per page and the macro can be called with or without parameters.
 |*Parameter*|*Description*|*Default*|
-|"..." or calendartopic="..."|This is the topic where created events will be stored and where they will be searched for when displaying events. The format is "[&lt;web&gt;.]&lt;topic&gt;".|WebCalendar|
-|reltopic="..."|All objects managed by the ObjectPlugin _can_ have a reltopic parameter that points to a related &lt;web&gt;.&lt;topic&gt;, this is so that a single topic can act as the cache for all objects with the aim of helping performance. The !FullCalendarPlugin uses this feature.|If the current topic matches the specification of the calendartopic, then there is no specified reltopic. Else, reltopic is the current topic.|
-|viewall="..."|1 or 0. Depending on the setting of reltopic, all events stored in the calendartopic can be viewed or just the ones that match the reltopic setting.||
-
+|"..." or calendartopic="..."|Optional. This is the topic where created events will be stored and where they will be searched for when displaying events. The format is "[&lt;web&gt;.]&lt;topic&gt;".|WebCalendar|
+|reltopic="..."|Optional. All objects managed by the ObjectPlugin _can_ have a reltopic parameter that points to a related &lt;web&gt;.&lt;topic&gt;, this is so that a single topic can act as the cache for all objects with the aim of helping performance. The !FullCalendarPlugin uses this feature.|If the current topic matches the specification of the calendartopic, then there is no specified reltopic. Else, reltopic is the current topic.|
+|viewall="..."|Optional. 1 or 0. Depending on the setting of reltopic, all events stored in the calendartopic can be viewed or just the ones that match the reltopic setting.| |
 
 ---++ The Calendar Event Object
 The event attributes are defined in the EventObject topic. The default definition is in the =%<nop>SYSTEMWEB%=, but can be overridden by a new !EventObject in the =%<nop>USERSWEB%= and finally by one defined in the current web.
@@ -31,12 +30,30 @@ Just click on a day in the calendar to create a new event via the input form. Cl
    * Change all instances (Update the original event record)
    * Change all instances from this point onwards (Create a new event record)
    
-*Note* that all newly created events will be done so with the matching reltopic setting.
+*Note* that all newly created events will be done so with the matching =reltopic= setting.
+
+---++ Other Event Sources
+All Foswiki Macros defined in the =calendartopic= topic are expanded. If they produce suitably formatted event records, these are then included in the displayed event set. *Note that a dynamic search could have a significant impact on performance when browsing the calendar.* The format should be as follows:
+<verbatim>
+%OBJECT{...}%<description>%ENDOBJECT%
+</verbatim>
+|*Parameter* |*Description* |
+|type="event" |Required to be recognised as an event object. |
+|uid="..."|Required. A unique ID of the event or event group.|
+|category="external"|Required as these events will not be editable.|
+|allDay="..."|Required. 0 or 1. All day event or not.|
+|durationDays="..."|Required. The number of days the event lasts for. Starts at 0.|
+|startDate="..."|Required. ISO8601 date format, YYYY-MM-DD.|
+|startTime="..."|Required. ISO8601 time format, HH:MM:SS.|
+|endTime="..."|Required. ISO8601 time format, HH:MM:SS.|
+|title="..."|Required.|
+|url="..."|Optional. A URL to launch in a new tab/window if the event is clicked on the calendar.|
+|eventSource="..."|Optional. A text string defining the source of the event.|
 
 ---++ Customisation
 The EventObject and FullCalendarEventTemplate topics are provided as the default installation. View WebCalendar to see the result. As indicated above, you can create your own EventObject with attributes relevant to your installation and in UserCalEventTemplate you can customise the =userFormElements= TMPL to match your new event object.
 
-%X% *Note, the default FullCalendarEventTemplate expects the =%USERGROUP%= variable to be set to a Group topic that gets parsed to provide a multi-select list of attendees. You can, off course, change this to be a free text field.*
+%X% *Note, the default FullCalendarEventTemplate expects the =%USERGROUP%= variable to be set to a Group topic that gets parsed to provide a multi-select list of attendees. You can, off course, change this to be a free text field with auto-complete.*
 
 ---++ Future Improvements
 
@@ -48,6 +65,9 @@ Currently only one event form is ever loaded per page so if you load different c
 
 ---+++ User Specific Calendars
 Each user can have their own calendar on which they can view the events of other calendars they are subscribed to.
+
+---+++ Agenda List View
+The events displayed on the calendar will also be displayed in a chronological list.
 
 ---+ Plugin Installation Instructions
 

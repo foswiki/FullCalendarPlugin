@@ -61,7 +61,11 @@ sub _handleFullCalendar {
 
 	my $calendartopic = $attrs->{_DEFAULT} || $attrs->{calendartopic} || 'WebCalendar';
 	$calendartopic =~ s/\s*//;
-	my $reltopic = $attrs->{reltopic} || $topic eq $calendartopic ? '' : $topic;
+	my ($cw, $ct) = Foswiki::Func::normalizeWebTopicName($web, $calendartopic);
+	$calendartopic = "$cw.$ct";
+	my $reltopic = $attrs->{reltopic} || $topic;
+	my ($rw, $rt) = Foswiki::Func::normalizeWebTopicName($web, $reltopic);
+	$reltopic = "$rw.$rt" eq $calendartopic ? '' : "$rw.$rt";
 	my $viewall = $attrs->{viewall} || '';
 	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
 	my $fcpCSS = Foswiki::Func::expandTemplate( 'fcpCSS' );
@@ -70,15 +74,13 @@ sub _handleFullCalendar {
 	my $calendar = <<"HERE";
 <noautolink>
 %ADDTOZONE{"head" requires="JQUERYPLUGIN::THEME" text="$fcpCSS"}%
-<div id="calendar$rand"></div>
-%ADDTOZONE{"body" requires="HIJAXPLUGIN_JS" text="
-$fcpJS
+<div id="calendar$rand" class="fcp_calendar"></div>
+%ADDTOZONE{"body" requires="HIJAXPLUGIN_JS" text="$fcpJS
 <script type='text/javascript'>
 jQuery(function(){
 	foswiki.FullCalendar.init('#calendar$rand','$calendartopic','$reltopic','$viewall');
 });
-</script>
-"}%
+</script>"}%
 </noautolink>
 HERE
 	return $calendar;
@@ -176,7 +178,7 @@ sub _dateRangeSearch {
 	my $end = $query->param('end');
 	my $reltopic = $query->param('reltopic') || '';
 	my $calendartopic = $query->param('calendartopic');
-	($web, $topic) = Foswiki::Func::normalizeWebTopicName('', $calendartopic);
+	($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $calendartopic);
 	# writeDebug("$start $end");
 	$start = Foswiki::Time::formatTime($start, 'iso');
 	$end = Foswiki::Time::formatTime($end, 'iso');

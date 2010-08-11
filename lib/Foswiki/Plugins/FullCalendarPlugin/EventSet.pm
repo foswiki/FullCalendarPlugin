@@ -33,11 +33,11 @@ require Foswiki::Plugins::ObjectPlugin;
 # }
 
 sub load {
-	my ($web, $topic) = @_;
+	my ($web, $topic, $reltopic) = @_;
 	my $setClass = 'Foswiki::Plugins::FullCalendarPlugin::EventSet';
 	my $objectClass = 'Foswiki::Plugins::FullCalendarPlugin::Event';
 	return Foswiki::Plugins::ObjectPlugin::ObjectSet::load(
-		$web, $topic, undef, 'VIEW', 0, 0, $setClass, $objectClass );
+		$web, $topic, undef, 'VIEW', 1, 0, $setClass, $objectClass, $reltopic );
 }
 		
 sub dateRangeSearch {
@@ -45,16 +45,12 @@ sub dateRangeSearch {
 
     my $chosen = new Foswiki::Plugins::FullCalendarPlugin::EventSet();
 	
-	my $es = load($web, $topic);
+	my $es = load($web, $topic, $reltopic);
 	# Foswiki::Func::writeDebug(Dumper($es));
     foreach my $event ( @{$es->{OBJECTS}} ) {
 	# Foswiki::Func::writeDebug(ref($event));
         if ( ref($event) && $event->withinRange( $start, $end ) ) {
-			if ($reltopic) {
-				$chosen->add( $event ) if ($event->{reltopic} && $event->{reltopic} eq $reltopic);
-			} else {
-				$chosen->add( $event );
-			}
+			$chosen->add( $event );
         }
     }
 

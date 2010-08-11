@@ -67,7 +67,7 @@ function initForm(html) {
 				$('#recur_data').hide();
 				$recur.attr('checked',false);
 			default:
-				$("#appt_users").attr({'multiple':true,'size':5});
+				resetUserList();
 				$('#appt_attendees').find("label[for='users']").text("Attendees:");
 				break;
 		}
@@ -162,15 +162,14 @@ function cancelForm($form) {
 	$form.find('input[id^=fcp_]').val('');
     $('#recur_data').find('.urlParam').removeClass('urlParam');
     $('#appt_form_cancel').unbind('click.revert');
-	$form.removeData('reltopic');
+	$('#fcp_reltopic').val('');
     resetForm();
+	resetUserList();
 }
 function resetForm() {
     $("#recur_data").find('.appt_recur_form').andSelf().hide();
     $("#appt_recur").attr("checked",false);
 	
-	$("#appt_users").attr({'multiple':true,'size':5});
-
     $(".fcp_timeperiod").show();
     $("#appt_allDay").attr("checked",false);
 
@@ -180,6 +179,14 @@ function resetForm() {
     $('#calEventUpdate').hide();
     $('#recur_event_change').hide();
 }
+function resetUserList() {
+	$("#appt_users").each(function(){
+		if ($(this).attr('resetmultiple')) {
+			var size = $(this).attr('resetmultiple');
+			$(this).attr({'multiple':true,'size':size});
+		}
+	});
+}
 function setAllDay($allday) {
     $allday.attr('checked',true);
     $('#newCalEvent .fcp_timeperiod').hide();
@@ -187,7 +194,7 @@ function setAllDay($allday) {
 function getEvent(event,func) {
 	var startSecs = Math.floor(event.start.getTime()/1000);
 	var d = new Date();
-	var tzoffset = -d.getTimezoneOffset() * 60;  // messy handling of local tz, is there better?
+	var tzoffset = -d.getTimezoneOffset() * 60;  // ugly handling of local tz, is there better?
 	startSecs += tzoffset; 
 	var endSecs = startSecs + (60*60*24) + 1; // + 1 day & 1 sec
 	foswiki.HijaxPlugin.serverAction({
@@ -337,7 +344,7 @@ loadForm : function(event) {
 	$('#appt_desc').val(event.text);
 	$('#appt_users').val(event.users);
 	var dateformat = 'd MMM yyyy-HH:mm:ss';
-	var dateStr = $.fullCalendar.formatDate(event.start, dateformat)
+	var dateStr = $.fullCalendar.formatDate(event.start, dateformat);
 	var dateArray = dateStr.split('-');
 	$startDate = $('#appt_startDate').val(dateArray[0]);
 	$('#appt_startTime').val(dateArray[1]);
@@ -352,7 +359,7 @@ loadForm : function(event) {
 	$('#fcp_uid').val(event.uid);
 	var topic = event.web+'.'+event.topic;
 	$('#fcp_topic').val(topic);
-	$('#fcp_reltopic').val($form.data('reltopic'));
+	$('#fcp_reltopic').val(event.reltopic);
 	$('#appt_form_submit').hide();
 	$('#calEventUpdate').show();
 	if (event.repeater) {
@@ -413,7 +420,6 @@ init : function(cal,calendartopic,reltopic,viewall) {
 	if (calendartopic.search(/\./) == -1) calendartopic = foswiki.web+'.'+calendartopic; // SMELL: a bit simple
     $(cal).mouseup(function(){
 		$form.data('calendar',this);
-		$form.data('reltopic',reltopic);
 	}).fullCalendar({
         theme: true,
         header: {
@@ -510,16 +516,36 @@ init : function(cal,calendartopic,reltopic,viewall) {
 				$('#appt_endDate').val(dateArray[0]);
             }
 			$('#fcp_topic').val(calendartopic);
+			$('#fcp_reltopic').val(reltopic);
             $form.parent().centerInClient({forceAbsolute:true}).fadeIn();
         },
         eventClick: function(calEvent, jsEvent, view) {
-            if (calEvent.className == 'action') {
-                alert("Action Tracker integration is ongoing.\nPlease use the Action Tracker interface available via the toolbar or visit the WebActions page.\n\n" + calEvent.text);
-            } else {
-                getEvent(calEvent, function(event){
-                    foswiki.FullCalendar.loadForm(event);
-                });
+            switch (calEvent.category) {
+				case 'action':
+					foswiki.HijaxPlugin.showOops("Action Tracker integration is ongoing.\
+Please use the Action Tracker interface available via the toolbar or visit the WebActions page.\n\n" + 
+calEvent.text);
+					break;
+				case 'external':
+					var dateformat = 'd MMM yyyy at HH:mm:ss';
+					var start = $.fullCalendar.formatDate(calEvent.start, dateformat);
+					var end = $.fullCalendar.formatDate(calEvent.end, dateformat);
+					var message = "<h2>"+calEvent.title+"</h2>\
+<p>Starting: " + start + "</p><p>Ending: " + end + "</p><p>" + calEvent.text + "</p>";
+					if (calEvent.eventSource) {
+						message = message + "<hr />From: " + calEvent.eventSource;
+					}
+					foswiki.HijaxPlugin.showOops(message);
+					break;
+				default:
+					getEvent(calEvent, function(event){
+						foswiki.FullCalendar.loadForm(event);
+					});
             }
+			if (calEvent.url) {
+				window.open(calEvent.url);
+				return false;
+			}
         }
     });
 	if (!$form) getForm();

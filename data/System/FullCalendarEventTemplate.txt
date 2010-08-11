@@ -1,6 +1,10 @@
 %META:TOPICINFO{author="ProjectContributor" date="1275395213" format="1.1" version="1.1"}%
 %META:TOPICPARENT{name="FullCalendarPlugin"}%
 <verbatim>
+%TMPL:DEF{apptUserList}%<select multiple size="5" id="appt_users" name="users" class="userlist urlParam" resetmultiple="5">
+%SEARCH{"*" nonoise="on" topic="%USERGROUP%" web="%USERSWEB%" format="$percntFORMATLIST{$quot$pattern(.*[\t\s]*\* Set GROUP = (.*?)[\r\n].*)$quot split=$quot[\s,]$quot separator=$quot $quot format=$quot<option value=$dollarquot$dollar1$dollarquot>$dollarpercntSPACEOUT{$dollar1}$dollarpercnt</option>$quot}$percnt"}%
+</select>%TMPL:END%
+
 %TMPL:DEF{userFormElements}%
 <div id="eventCat" class="foswikiFormStep">
 *Post an Event:* <span class="mission"><input type="radio" name="category" value="mission" class="mission urlParam" checked="checked" /> Mission &nbsp;</span><span class="meeting"><input type="radio" name="category" value="meeting" class="meeting urlParam" /> Meeting &nbsp;</span><span class="leave"><input type="radio" name="category" value="leave" class="leave urlParam" /> Leave &nbsp;</span><span class="milestone"><input type="radio" name="category" value="milestone" class="milestone urlParam" /> Milestone</span><br>
@@ -16,9 +20,7 @@
                cols="50" rows="4" class="urlParam leave" /></textarea>
 </div>
 <div id="appt_attendees">
-<label for="users">Attendees:</label><br /> <select multiple size="5" id="appt_users" name="users" class="userlist urlParam">
-%SEARCH{"*" nonoise="on" topic="%USERGROUP%" web="%USERSWEB%" format="$percntFORMATLIST{$quot$pattern(.*[\t\s]*\* Set GROUP = (.*?)[\r\n].*)$quot split=$quot[\s,]$quot separator=$quot $quot format=$quot<option value=$dollarquot$dollar1$dollarquot>$dollarpercntSPACEOUT{$dollar1}$dollarpercnt</option>$quot}$percnt"}%
-</select>
+<label for="users">Attendees:</label><br /> %TMPL:P{apptUserList}%
 </div>
 </div>
 %TMPL:END%
