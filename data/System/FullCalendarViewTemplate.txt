@@ -3,5 +3,5 @@
 %TMPL:INCLUDE{view}%
 
 %TMPL:DEF{content}%
-%FULLCALENDAR%
+%FULLCALENDAR{%FORMFIELD{"SubscribedCalendars" format="calendartopic=$quot$value$quot"}%}%
 %TMPL:END%

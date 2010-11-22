@@ -2,3 +2,4 @@
 %META:TOPICPARENT{name="FullCalendarPlugin"}%
 
 %META:PREFERENCE{name="VIEW_TEMPLATE" title="VIEW_TEMPLATE" type="Set" value="FullCalendarView"}%
+%META:PREFERENCE{name="EDIT_TEMPLATE" title="EDIT_TEMPLATE" type="Set" value="FullCalendarEdit"}%

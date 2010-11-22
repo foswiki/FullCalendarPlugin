@@ -23,16 +23,20 @@
     color:#fff;
 }
 .ui-datepicker {
-    z-index:2100;
+    z-index:1100;
 }
 .fcp_timeperiod {
     display:inline;
 }
 .ontop {
-    z-index:2000;
+    z-index:1000; /*same as jQuery UI dialog default*/
     border:solid 3px #e2e2e2;
 }
 #appt_attendees {
     float:left;
     margin-left:10px;
+}
+#fcpTopicDiv h3 {
+	display:inline;
+	margin-right:0.5em;
 }

@@ -1,0 +1,8 @@
+%META:TOPICINFO{author="ProjectContributor" date="1268316360" format="1.1" version="1.1"}%
+%META:TOPICPARENT{name="FullCalendarPlugin"}%
+
+---+ %SPACEOUT{%TOPIC%}%
+
+| *Name:* | *Type:* | *Size:* | *Value:*  | *Tooltip message:* | *Attributes:* |
+| TopicType | label | 20 | FullCalendarTopic | | |
+| SubscribedCalendars | select+multi | 5 | %SEARCH{"TopicType = 'FullCalendarTopic' OR TopicClassification = 'FullCalendarTopic'" type="query" webs="*" format="$web.$topic" separator="," nonoise="on"}%  | | |

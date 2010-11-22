@@ -3,6 +3,8 @@ data/System/FullCalendarPlugin.txt 0644 Documentation
 data/System/EventObject.txt 0644
 data/System/FullCalendarEventTemplate.txt 0644
 data/System/FullCalendarViewTemplate.txt 0644
+data/System/FullCalendarEditTemplate.txt 0644
+data/System/FullCalendarForm.txt 0644
 data/System/WebCalendar.txt 0644
 lib/Foswiki/Plugins/FullCalendarPlugin.pm 0644
 lib/Foswiki/Plugins/FullCalendarPlugin/Event.pm 0644
