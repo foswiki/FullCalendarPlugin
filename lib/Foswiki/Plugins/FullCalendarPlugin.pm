@@ -33,7 +33,7 @@ require Foswiki::OopsException;
 use vars qw( $VERSION $RELEASE $SHORTDESCRIPTION $debug );
 $debug = 0; # toggle me
 $VERSION = '$Rev$';
-$RELEASE = '1.0';
+$RELEASE = '1.1';
 $SHORTDESCRIPTION = 'Web 2.0 calendar app';
 
 my %months = ( '01'=>'Jan', '02'=>'Feb', '03'=>'Mar', '04'=>'Apr', '05'=>'May', '06'=>'Jun', 
