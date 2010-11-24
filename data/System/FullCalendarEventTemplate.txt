@@ -7,7 +7,7 @@
 
 %TMPL:DEF{FormElements:event}%
 <div id="eventCat" class="foswikiFormStep">
-*Post an Event:* <span class="mission"><input type="radio" name="category" value="mission" class="mission urlParam" checked="checked" /> Mission &nbsp;</span><span class="meeting"><input type="radio" name="category" value="meeting" class="meeting urlParam" /> Meeting &nbsp;</span><span class="leave"><input type="radio" name="category" value="leave" class="leave urlParam" /> Leave &nbsp;</span><span class="milestone"><input type="radio" name="category" value="milestone" class="milestone urlParam" /> Milestone</span><br>
+*Post an Event:* <span class="mission catOption"><input type="radio" name="category" value="mission" class="mission urlParam" checked="checked" /> Mission &nbsp;</span><span class="meeting catOption"><input type="radio" name="category" value="meeting" class="meeting urlParam" /> Meeting &nbsp;</span><span class="leave catOption"><input type="radio" name="category" value="leave" class="leave urlParam" /> Leave &nbsp;</span><span class="milestone catOption"><input type="radio" name="category" value="milestone" class="milestone urlParam" /> Milestone</span><br>
 </div>
 <div id="details" class="foswikiFormStep foswikiLeft">
 ---+++ Details
@@ -24,7 +24,9 @@
 </div>
 </div><script type="text/javascript">
 jQuery(function(){
-	$('#eventCat').find("input[name='category']").unbind('click.eventCat').bind('click.eventCat',function() {
+	var $eventCat = $('#eventCat');
+	$eventCat.find("input[name='category']")
+	.unbind('click.eventCat').bind('click.eventCat',function() {
 		var $details = $('#details').find('label, .urlParam').show().end();
 		var $apptdetails = $('#appt_details').show();
 		var thisValue = $(this).val();
@@ -43,6 +45,22 @@ jQuery(function(){
 				foswiki.FullCalendar.resetUserList();
 				$('#appt_attendees').find("label[for='users']").text("Attendees:");
 				break;
+		}
+	});
+	$('body').unbind('fcpLoadForm').bind('fcpLoadForm',function(event,calEvent){
+		$eventCat.find('input:radio.' + calEvent.category).trigger('click'); 
+		$('#appt_title').val(calEvent.title);
+		$('#appt_location').val(calEvent.location);
+		$('#appt_desc').val(calEvent.text);
+		$('#appt_users').val(calEvent.users);
+		return false;
+	}).unbind('fcpCancelForm').bind('fcpCancelForm', function(event){
+		foswiki.FullCalendar.resetUserList();
+		$eventCat.find('input:radio.mission').trigger('click');
+		return false;
+	}).unbind('fcpEventAsObject').bind('fcpEventAsObject', function(){
+		if ($eventCat.find("input[name='category']:checked").val() == "leave") {
+			$('#appt_title').val($('#appt_users').val());
 		}
 	});
 });
@@ -67,6 +85,7 @@ jQuery(function(){
 <div style="clear:both;"></div>
 <div id="fcpTopicDiv" class="foswikiFormStep">
 ---+++ Calendar and Type
+
 <select id="fcp_topic" name="topic" class="urlParam"></select> &nbsp; <select id="fcp_type" name="type" class="urlParam"></select>
 </div>
 <div class="foswikiFormStep">

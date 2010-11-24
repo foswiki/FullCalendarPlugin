@@ -114,10 +114,10 @@ sub _handleFullCalendar {
 	my $rand = int rand(999999);
 	my $type = $attrs->{type} || 'event'; # event type
 	$type = lc($type);
-	($cw, $ct) = split(/./,$calendars[0]);
+	($cw, $ct) = split(/\./,$calendars[0]);
 	Foswiki::Func::addToZone('head','FCP_CSS',$fcpCSS,'JQUERYPLUGIN::THEME');
-	Foswiki::Func::addToZone('body','FCP_JS',$fcpJS,'HIJAXPLUGIN_JS');
-	Foswiki::Func::addToZone('body','calendar'.$rand,<<"HERE",'FCP_JS');
+	Foswiki::Func::addToZone('script','FCP_JS',$fcpJS,'HIJAXPLUGIN_JS');
+	Foswiki::Func::addToZone('script','calendar'.$rand,<<"HERE",'FCP_JS');
 <script type='text/javascript'>
 jQuery(function(){
 	foswiki.FullCalendar.init('#calendar$rand','$cw','$ct','$type','$calendartopic','$reltopic','$viewall');

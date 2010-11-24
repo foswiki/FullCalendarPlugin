@@ -1,6 +1,6 @@
 .fcp_label {
 	float:left;
-	width:5em;
+	width:6em;
 	text-align:right;
 }
 .fcp_calendar .action a {
@@ -21,6 +21,9 @@
 .fcp_calendar .milestone a, #eventCat .milestone {
     background-color:#000;
     color:#fff;
+}
+#eventCat .catOption {
+	padding:5px;
 }
 .ui-datepicker {
     z-index:1100;

@@ -5,4 +5,4 @@
 
 | *Name:* | *Type:* | *Size:* | *Value:*  | *Tooltip message:* | *Attributes:* |
 | TopicType | label | 20 | FullCalendarTopic | | |
-| SubscribedCalendars | select+multi | 5 | %SEARCH{"TopicType = 'FullCalendarTopic' OR TopicClassification = 'FullCalendarTopic'" type="query" webs="*" format="$web.$topic" separator="," nonoise="on"}%  | | |
+| Subscribed Calendars | select+multi | 5 | %SEARCH{"TopicType = 'FullCalendarTopic' OR TopicClassification = 'FullCalendarTopic'" type="query" webs="*" format="$web.$topic" separator="," nonoise="on"}%  | | |

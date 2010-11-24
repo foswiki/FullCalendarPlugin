@@ -27,7 +27,7 @@ You can have multiple calendars per page and the macro can be called with or wit
 |viewall="..."|Optional. 1 or 0. Depending on the setting of reltopic, all events stored in the calendartopic can be viewed or just the ones that match the reltopic setting.| |
 
 ---+++ Subscribing to multiple calendars
-There must be many ways that the =calendartopic= parameter can be populated. One example is provided with this installation. The supplied FullCalendarForm defines two fields, !TopicType which is !FullCalendarTopic, and !SubscribedCalendars which provides a list of !FullCalendarTopic topics to choose from when editing. The FullCalendarViewTemplate populates the =calendartopic= parameter using the FORMFIELD macro, and the FullCalendarEditTemplate restricts editing to the form only where calendars can be subscribed to.
+There must be many ways that the =calendartopic= parameter can be populated. One example is provided with this installation. The supplied FullCalendarForm defines two fields, !TopicType which is !FullCalendarTopic, and !SubscribedCalendars which provides a list of !FullCalendarTopic topics to choose from when editing. The FullCalendarViewTemplate populates the =calendartopic= parameter using the FORMFIELD macro, and the FullCalendarEditTemplate restricts editing to the form only where calendars can be subscribed to. This is embodied in WebCalendar.
 
 ---++ Creating and Editing Calendar Events
 Just click on a day in the calendar to create a new event via the input form. Click on an existing event to edit its properties via the input form. If the selected event is part of a repeating sequence, the options are to:
@@ -66,6 +66,11 @@ All Foswiki Macros defined in the =calendartopic= topic(s) are expanded. If they
 The EventObject and FullCalendarEventTemplate topics are provided as the default installation. View WebCalendar to see the result. As indicated above, you can create your own EventObject (in the =%<nop>USERSWEB%= for the whole site, or per web) with attributes relevant to your installation and in UserFullCalEventTemplate (in the =%<nop>USERSWEB%= for the whole site, or per web) you can customise the =FormElements:event= TMPL to match your new event object.
 
 You can create multiple object types, e.g. !MyeventObject (note the formatting of the topic name, uppercase first letter and uppercase 'O' of 'Object' only), and then create respective !FormElements templates in UserFullCalEventTemplate, e.g. =FormElements:myevent= . For an event to appear on a calendar, it must have the =startDate= parameter, everything else is optional. See ObjectPlugin for information on defining new objects.
+
+See the =FormElements:event= TMPL in FullCalendarEventTemplate for an example of how additional javascript can be included to control the behaviour of custom event elements on the input form. The following hooks are provided for triggering the actions:
+   * =fcpLoadForm= - use for populating the custom form elements when an existing event is being loaded into the form,
+   * =fcpCancelForm= - use to reset custom form elements when the form is closed,
+   * =fcpEventAsObject= - triggered just before all the =class="urlParam"= parameters are collected into a js object for transmitting to the server.
 
 ---+++ User list
 The default FullCalendarEventTemplate expects the =%USERGROUP%= variable to be set to a Group topic that gets parsed to provide a multi-select list of attendees. You can, off course, change this to be something else such as a free text field with auto-complete.
