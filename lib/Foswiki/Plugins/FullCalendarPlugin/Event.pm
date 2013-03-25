@@ -33,8 +33,7 @@ use Date::Calc qw(:all);
 sub withinRange {
 	my ($this, $start, $end) = @_;
 	# Foswiki::Plugins::FullCalendarPlugin::writeDebug(Dumper($this)." ".$start." ".$end);
-	return 0 unless $this->{startDate}; # the minimum required to appear on a calendar
-	return 1 if (($this->{startDate} lt $end) && (!$this->{rangeEnd} || ($this->{rangeEnd} ge $start)));
+	return 1 if (($this->{startDate} lt $end) && (($this->{rangeEnd} eq '') || ($this->{rangeEnd} ge $start)));
 	return 0;
 }
 
@@ -44,16 +43,6 @@ sub setFullCalendarAttrs {
 	$this->{category} ||= 'external';
 	$this->{className} = $this->{category};
 	$this->{editable} = 0 if $this->{category} eq 'external';
-	unless (defined $this->{allDay}) {
-		unless (defined $this->{startTime}) {
-			$this->{allDay} = 1;
-		} else {
-			$this->{allDay} = 0;
-		}
-	}
-	unless (defined $this->{startTime}) {
-		$this->{startTime} = $this->{endTime} = "00:00:00";
-	}
 	$this->{allDay} += 0;
 	$this->{title} ||= 'no title'; # one of the required fields in an FC Event Object
 }
@@ -72,8 +61,7 @@ sub addTo {
 
 	if ($clone) {
 		# can't get the JSON blessed object handling to work properly here, 
-		# - when doing it for an array of objects - 
-		# single objects seem to work though, hence TO_JSON in Object.pm -
+		# - when doing it for an array of objects - single objects seem to work though, hence TO_JSON in Object.pm -
 		# so let's just do the unblessing here and now
 		$os->add($this->forJSON());
 	} else {
@@ -87,7 +75,7 @@ sub forJSON {
 	my $types = $this->{oDef}->{types};
 	foreach my $key (keys %$this) {
 		# return everything unless specifically told not to
-		next if $types->{$key} =~ /noload/;
+		next if $types->{$key} && $types->{$key} =~ /noload/;
 		$new->{$key} = $this->{$key} if defined $this->{$key};
 	}
 	return $new;
@@ -252,8 +240,9 @@ sub addIfInView {
 sub expand {
 	my ($this, $os, $start, $end, $clone) = @_;
 	my $repeater = $this->{repeater};
+	my $code = $this->{code};
 	
-	unless ($repeater) {
+	if ($repeater eq '') {
 		Foswiki::Plugins::FullCalendarPlugin::writeDebug("adding non-repeating object");
 		$this->{start} = $this->{startDate};
 		$this->addTo($os, $clone);

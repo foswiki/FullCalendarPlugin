@@ -21,7 +21,6 @@ use Foswiki::Plugins::ObjectPlugin::ObjectSet;
 
 use strict;
 use integer;
-use Error qw( :try );
 # use Data::Dumper;
 use Foswiki::Func;
 require Foswiki::Plugins::ObjectPlugin;
@@ -34,11 +33,11 @@ require Foswiki::Plugins::ObjectPlugin;
 # }
 
 sub load {
-	my ($web, $topic, $reltopic, $purpose) = @_;
+	my ($web, $topic, $reltopic) = @_;
 	my $setClass = 'Foswiki::Plugins::FullCalendarPlugin::EventSet';
 	my $objectClass = 'Foswiki::Plugins::FullCalendarPlugin::Event';
 	return Foswiki::Plugins::ObjectPlugin::ObjectSet::load(
-		$web, $topic, undef, $purpose, 1, 0, $setClass, $objectClass, $reltopic );
+		$web, $topic, undef, 'VIEW', 1, 0, $setClass, $objectClass, $reltopic );
 }
 		
 sub dateRangeSearch {
@@ -46,19 +45,11 @@ sub dateRangeSearch {
 
     my $chosen = new Foswiki::Plugins::FullCalendarPlugin::EventSet();
 	
-	my $es;
-	my $editable = 1;
-	try {
-		$es = load($web, $topic, $reltopic, 'CHANGE');
-	} catch Foswiki::AccessControlException with {
-		$es = load($web, $topic, $reltopic, 'VIEW');
-		$editable = 0;
-	};
+	my $es = load($web, $topic, $reltopic);
 	# Foswiki::Func::writeDebug(Dumper($es));
     foreach my $event ( @{$es->{OBJECTS}} ) {
 	# Foswiki::Func::writeDebug(ref($event));
         if ( ref($event) && $event->withinRange( $start, $end ) ) {
-			$event->{editable} = $editable;
 			$chosen->add( $event );
         }
     }

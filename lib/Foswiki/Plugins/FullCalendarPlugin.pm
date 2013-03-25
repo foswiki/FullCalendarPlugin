@@ -32,8 +32,8 @@ require Foswiki::OopsException;
 
 use vars qw( $VERSION $RELEASE $SHORTDESCRIPTION $debug );
 $debug = 0; # toggle me
-$VERSION = '$Rev$';
-$RELEASE = '1.1';
+$VERSION = '$Rev: 8457 (2010-08-11) $';
+$RELEASE = '1.0';
 $SHORTDESCRIPTION = 'Web 2.0 calendar app';
 
 my %months = ( '01'=>'Jan', '02'=>'Feb', '03'=>'Mar', '04'=>'Apr', '05'=>'May', '06'=>'Jun', 
@@ -56,75 +56,33 @@ sub initPlugin {
     return 1;
 };
 
-sub _eventsRESTHandler {
-    my( $session ) = @_;
-	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_dateRangeSearch);
-}
-
-sub _editEventRESTHandler {
-    my $session = shift;
-	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_eventEdit);
-}
-
-sub _eventFormRESTHandler {
-    my $session = shift;
-	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_getEventForm);
-}
-	
-sub _getEventForm {
-	my ($web, $topic, $query) = @_;
-	my $type = $query->param('eventType');
-	my $form = $query->param('eventForm');
-	my $response = {};
-
-	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
-	if ($form) {
-		$form = Foswiki::Func::expandTemplate( 'eventForm' );
-		$response->{eventForm} = Foswiki::Func::renderText(Foswiki::Func::expandCommonVariables($form));
-	}
-	my $elements = Foswiki::Func::expandTemplate( 'FormElements:'.$type );
-	unless ($elements) {
-		$elements = Foswiki::Func::expandTemplate( 'FormElements:event' );
-		$type = 'event';
-	}
-	$response->{elements} = 
-		Foswiki::Func::renderText(Foswiki::Func::expandCommonVariables($elements));
-	$response->{type} = $type;
-	return $response;
-}
-
 sub _handleFullCalendar {
     my( $session, $attrs, $topic, $web ) = @_;
 
 	my $calendartopic = $attrs->{_DEFAULT} || $attrs->{calendartopic} || 'WebCalendar';
-	my @calendars = split(/\s*,\s*/,$calendartopic);
-	my ($cw, $ct) = ('', '');
-	foreach (@calendars) {
-		($cw, $ct) = Foswiki::Func::normalizeWebTopicName($web, $_);
-		$_ = $cw.'.'.$ct;
-	}
-	$calendartopic = join(',',@calendars);
+	$calendartopic =~ s/\s*//;
+	my ($cw, $ct) = Foswiki::Func::normalizeWebTopicName($web, $calendartopic);
+	$calendartopic = "$cw.$ct";
 	my $reltopic = $attrs->{reltopic} || $topic;
 	my ($rw, $rt) = Foswiki::Func::normalizeWebTopicName($web, $reltopic);
-	$reltopic = (scalar(@calendars) == 1) && ($rw.'.'.$rt eq $calendartopic) ? '' : $rw.'.'.$rt;
+	$reltopic = "$rw.$rt" eq $calendartopic ? '' : "$rw.$rt";
 	my $viewall = $attrs->{viewall} || '';
 	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
 	my $fcpCSS = Foswiki::Func::expandTemplate( 'fcpCSS' );
 	my $fcpJS = Foswiki::Func::expandTemplate( 'fcpJS' );
 	my $rand = int rand(999999);
-	my $type = $attrs->{type} || 'event'; # event type
-	$type = lc($type);
-	($cw, $ct) = split(/\./,$calendars[0]);
-	Foswiki::Func::addToZone('head','FCP_CSS',$fcpCSS,'JQUERYPLUGIN::THEME');
-	Foswiki::Func::addToZone('script','FCP_JS',$fcpJS,'HIJAXPLUGIN_JS');
-	Foswiki::Func::addToZone('script','calendar'.$rand,<<"HERE",'FCP_JS');
+	my $calendar = '<div id="calendar'.$rand.'" class="fcp_calendar"></div>';
+	Foswiki::Func::addToZone('head','FULLCALENDARPLUGIN_CSS', <<"HERE",'JQUERYPLUGIN::THEME');
+$fcpCSS
+HERE
+	Foswiki::Func::addToZone('script','FULLCALENDARPLUGIN_JS', <<"HERE", 'HIJAXPLUGIN_JS');
+$fcpJS
 <script type='text/javascript'>
 jQuery(function(){
-	foswiki.FullCalendar.init('#calendar$rand','$cw','$ct','$type','$calendartopic','$reltopic','$viewall');
+	foswiki.FullCalendar.init('#calendar$rand','$calendartopic','$reltopic','$viewall');
 });
 </script>
 HERE
-	my $calendar = '<div id="calendar'.$rand.'" class="fcp_calendar"></div>';
 	return $calendar;
 }
 
@@ -181,25 +139,51 @@ sub getMatchingActions {
 	return $os;
 }
 
+sub _eventsRESTHandler {
+    my( $session ) = @_;
+	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_dateRangeSearch);
+}
+
+sub _editEventRESTHandler {
+    my $session = shift;
+	return Foswiki::Plugins::ObjectPlugin::objectResponse($session,\&_eventEdit);
+}
+
+sub _eventFormRESTHandler {
+    my $session = shift;
+	my $templates = Foswiki::Func::loadTemplate( 'FullCalendarEvent' );
+	my $form = Foswiki::Func::expandTemplate( 'eventForm' );
+    return Foswiki::Func::renderText(Foswiki::Func::expandCommonVariables($form));
+}
+
+sub _findSingleEvent {
+    my ( $web, $topic, $uid ) = @_;
+
+    my $es = Foswiki::Plugins::FullCalendarPlugin::EventSet::load($web, $topic);
+
+    foreach my $event (@{$es->{OBJECTS}}) {
+        if (ref($event)) {
+            if ($event->{uid} eq $uid) {
+				return $event;
+			}
+        }
+    }
+	return {}; # no match
+}
+
 sub _dateRangeSearch {
 	my ($web, $topic, $query) = @_;
 
 	my $start = $query->param('start');
 	my $end = $query->param('end');
+	my $reltopic = $query->param('reltopic') || '';
+	my $calendartopic = $query->param('calendartopic');
+	($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $calendartopic);
 	# writeDebug("$start $end");
 	$start = Foswiki::Time::formatTime($start, 'iso');
 	$end = Foswiki::Time::formatTime($end, 'iso');
 	writeDebug("$start $end $topic");
-	my $reltopic = $query->param('reltopic') || '';
-	my $calendartopic = $query->param('calendartopic') || 'WebCalendar';
-	my @calendars = split(/\s*,\s*/,$calendartopic);
-	my $es = new Foswiki::Plugins::FullCalendarPlugin::EventSet();
-	foreach (@calendars) {
-		my ($cw, $ct) = Foswiki::Func::normalizeWebTopicName($web, $_);
-		my $events = Foswiki::Plugins::FullCalendarPlugin::EventSet::dateRangeSearch( 
-													$cw, $ct, $start, $end, $reltopic );
-		$es->concat($events);
-	}
+	my $es = Foswiki::Plugins::FullCalendarPlugin::EventSet::dateRangeSearch( $web, $topic, $start, $end, $reltopic );
 	# writeDebug(Dumper(@{$es->{OBJECTS}}));
 	my $startObj = parseISOdate($start);
 	my $endObj = parseISOdate($end);
@@ -250,16 +234,9 @@ sub _dateRangeSearch {
 sub _eventEdit {
 	my ($web, $topic, $query) = @_;
 	my $uid = $query->param('uid');
-	my ($event, $pre, $post, $meta); 
-	my $editable = 1;
-	try {
-		($event, $pre, $post, $meta) = Foswiki::Plugins::ObjectPlugin::ObjectSet::loadToFind(
-			$uid, $web, $topic, undef, 'CHANGE', 0, 'Foswiki::Plugins::FullCalendarPlugin::Event' );
-	} catch Foswiki::AccessControlException with {
-		($event, $pre, $post, $meta) = Foswiki::Plugins::ObjectPlugin::ObjectSet::loadToFind(
-			$uid, $web, $topic, undef, 'VIEW', 0, 'Foswiki::Plugins::FullCalendarPlugin::Event' );
-		$editable = 0;
-	};
+	my ($event, $pre, $post, $meta) = Foswiki::Plugins::ObjectPlugin::ObjectSet::loadToFind(
+		$uid, $web, $topic, undef, 'VIEW', 0, 'Foswiki::Plugins::FullCalendarPlugin::Event' );
+	# my $event = _findSingleEvent($web, $topic, $uid);
 	if (defined $event) {
 		# expand the found event to match the date on which it was selected in the calendar
 		# - like a mini dateRangeSearch
@@ -271,7 +248,6 @@ sub _eventEdit {
 		my $startObj = parseISOdate($start);
 		my $endObj = parseISOdate($end);
 		push(@{$startObj->{ympair}},"$startObj->{Y},$startObj->{M}");
-		$event->{editable} = $editable;
 		$event->setFullCalendarAttrs();
 		my $eventSet = new Foswiki::Plugins::FullCalendarPlugin::EventSet();
 		$event->expand($eventSet, $startObj, $endObj, $query->param('asobject'));
